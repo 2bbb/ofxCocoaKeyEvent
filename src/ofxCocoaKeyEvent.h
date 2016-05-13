@@ -15,29 +15,23 @@ enum KeyState {
     kUP = false,
 };
 
-
 class ofxCocoaKeyEvent {
 public:
     void send(char c, KeyState k){
-        CGEventSourceRef src = CGEventSourceCreate( kCGEventSourceStateHIDSystemState );
-        CGEventRef ev = CGEventCreateKeyboardEvent (src, keyCodeForChar(c), k);
+        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, keyCodeForChar(c), k);
         CGEventPost( kCGHIDEventTap, ev );
         CFRelease( ev );
-        CFRelease( src );
     }
 
     void send(int key, KeyState k){
         CGKeyCode code = getCodeFromOFKey(key);
-        CGEventSourceRef src = CGEventSourceCreate( kCGEventSourceStateHIDSystemState );
-        CGEventRef ev = CGEventCreateKeyboardEvent (src, code, k);
+        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, code, k);
         CGEventPost( kCGHIDEventTap, ev );
         CFRelease( ev );
-        CFRelease( src );
     }
     
     void send(char c, KeyState k, int num, ...){
-        CGEventSourceRef src = CGEventSourceCreate( kCGEventSourceStateHIDSystemState );
-        CGEventRef ev = CGEventCreateKeyboardEvent (src, keyCodeForChar(c), k);
+        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, keyCodeForChar(c), k);
         
         va_list args;
         va_start(args, num);
@@ -46,23 +40,21 @@ public:
             int key = va_arg(args , int);
             CGEventFlags flags = getFlagFromOFKey(key);
             if (k == kDOWN) {
-                CGEventSetFlags( ev, CGEventGetFlags( ev ) | flags );
+                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) | flags) );
             } else {
                 // Use all existing flag except current one
-                CGEventSetFlags( ev, CGEventGetFlags( ev ) & flags );
+                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) & flags) );
             }
         }
         
         CGEventPost( kCGHIDEventTap, ev );
         
         CFRelease( ev );
-        CFRelease( src );
     }
     
     void send(int key, KeyState k, int num, ...){
         CGKeyCode code = getCodeFromOFKey(key);
-        CGEventSourceRef src = CGEventSourceCreate( kCGEventSourceStateHIDSystemState );
-        CGEventRef ev = CGEventCreateKeyboardEvent (src, code, k);
+        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, code, k);
         
         va_list args;
         va_start(args, num);
@@ -71,17 +63,16 @@ public:
             int key = va_arg(args , int);
             CGEventFlags flags = getFlagFromOFKey(key);
             if (k == kDOWN) {
-                CGEventSetFlags( ev, CGEventGetFlags( ev ) | flags );
+                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) | flags) );
             } else {
                 // Use all existing flag except current one
-                CGEventSetFlags( ev, CGEventGetFlags( ev ) & flags );
+                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) & flags) );
             }
         }
         
         CGEventPost( kCGHIDEventTap, ev );
         
         CFRelease( ev );
-        CFRelease( src );
     }
 
     
@@ -257,9 +248,9 @@ private:
                 return kVK_UpArrow;
                 
             default:
-                return nil;
                 break;
         }
+        return 0;
     }
     
     CGEventFlags getFlagFromOFKey(int key) {
@@ -275,6 +266,7 @@ private:
             default:
                 break;
         }
+        return static_cast<CGEventFlags>(0);
     }
 
     
