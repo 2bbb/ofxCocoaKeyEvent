@@ -184,6 +184,9 @@ private:
                 return kVK_Control;
                 
             case OF_KEY_DEL:
+                return kVK_ForwardDelete;
+                
+            case OF_KEY_BACKSPACE:
                 return kVK_Delete;
                 
             case OF_KEY_DOWN:
