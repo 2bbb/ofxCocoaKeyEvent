@@ -31,48 +31,48 @@ public:
     }
     
     void send(char c, KeyState k, int num, ...){
-        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, keyCodeForChar(c), k);
+        CGEventSourceRef eventSource  = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+        CGEventRef ev = CGEventCreateKeyboardEvent (eventSource, keyCodeForChar(c), k);
         
         va_list args;
         va_start(args, num);
         
+        uint64_t flags;
         for (int i = 0; i < num; i++) {
             int key = va_arg(args , int);
-            CGEventFlags flags = getFlagFromOFKey(key);
-            if (k == kDOWN) {
-                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) | flags) );
-            } else {
-                // Use all existing flag except current one
-                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) & flags) );
-            }
+            uint64_t flag = getFlagFromOFKey(key);
+            if (k == kDOWN) flags |= flag;
+            else flags &= ~flag;
         }
+        CGEventSetFlags(ev, static_cast<CGEventFlags>(flags));
         
         CGEventPost( kCGHIDEventTap, ev );
         
         CFRelease( ev );
+        CFRelease(eventSource);
     }
     
     void send(int key, KeyState k, int num, ...){
         CGKeyCode code = getCodeFromOFKey(key);
-        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, code, k);
+        CGEventSourceRef eventSource  = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+        CGEventRef ev = CGEventCreateKeyboardEvent (eventSource, code, k);
         
         va_list args;
         va_start(args, num);
         
+        uint64_t flags;
         for (int i = 0; i < num; i++) {
             int key = va_arg(args , int);
-            CGEventFlags flags = getFlagFromOFKey(key);
-            if (k == kDOWN) {
-                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) | flags) );
-            } else {
-                // Use all existing flag except current one
-                CGEventSetFlags( ev, static_cast<CGEventFlags>(CGEventGetFlags( ev ) & flags) );
-            }
+            uint64_t flag = getFlagFromOFKey(key);
+            if (k == kDOWN) flags |= flag;
+            else flags &= ~flag;
         }
+        CGEventSetFlags(ev, static_cast<CGEventFlags>(flags));
         
         CGEventPost( kCGHIDEventTap, ev );
         
         CFRelease( ev );
+        CFRelease(eventSource);
     }
 
     
@@ -178,6 +178,8 @@ private:
                 return kVK_Option;
                 
             case OF_KEY_COMMAND:
+            case OF_KEY_LEFT_COMMAND:
+            case OF_KEY_RIGHT_COMMAND:
                 return kVK_Command;
                 
             case OF_KEY_CONTROL:
@@ -242,7 +244,10 @@ private:
                 return kVK_RightArrow;
                 
             case OF_KEY_SHIFT:
+            case OF_KEY_LEFT_SHIFT:
                 return kVK_Shift;
+            case OF_KEY_RIGHT_SHIFT:
+                return kVK_RightShift;
                 
             case OF_KEY_TAB:
                 return kVK_Tab;
