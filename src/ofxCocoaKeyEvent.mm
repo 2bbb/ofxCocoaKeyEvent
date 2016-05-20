@@ -39,7 +39,7 @@ void dumpKeyboardLayouts() {
 
 ofxCocoaKeyEvent::ofxCocoaKeyEvent() {
     dumpKeyboardLayouts();
-    eventSource = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
+    eventSource = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
 }
 
 ofxCocoaKeyEvent::~ofxCocoaKeyEvent() {
