@@ -16,28 +16,31 @@ enum KeyState {
 };
 
 class ofxCocoaKeyEvent {
+    CGEventSourceRef eventSource;
 public:
+    ofxCocoaKeyEvent();
+    ~ofxCocoaKeyEvent();
+    
     void send(char c, KeyState k){
-        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, keyCodeForChar(c), k);
-        CGEventPost( kCGHIDEventTap, ev );
-        CFRelease( ev );
+        CGEventRef ev = CGEventCreateKeyboardEvent(eventSource, keyCodeForChar(c), k);
+        CGEventPost(kCGHIDEventTap, ev);
+        CFRelease(ev);
     }
 
     void send(int key, KeyState k){
         CGKeyCode code = getCodeFromOFKey(key);
-        CGEventRef ev = CGEventCreateKeyboardEvent (NULL, code, k);
-        CGEventPost( kCGHIDEventTap, ev );
-        CFRelease( ev );
+        CGEventRef ev = CGEventCreateKeyboardEvent(eventSource, code, k);
+        CGEventPost(kCGHIDEventTap, ev);
+        CFRelease(ev);
     }
     
     void send(char c, KeyState k, int num, ...){
-        CGEventSourceRef eventSource  = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
-        CGEventRef ev = CGEventCreateKeyboardEvent (eventSource, keyCodeForChar(c), k);
+        CGEventRef ev = CGEventCreateKeyboardEvent(eventSource, keyCodeForChar(c), k);
         
         va_list args;
         va_start(args, num);
         
-        uint64_t flags;
+        uint64_t flags = k ? 0 : CGEventGetFlags(ev);
         for (int i = 0; i < num; i++) {
             int key = va_arg(args , int);
             uint64_t flag = getFlagFromOFKey(key);
@@ -46,21 +49,18 @@ public:
         }
         CGEventSetFlags(ev, static_cast<CGEventFlags>(flags));
         
-        CGEventPost( kCGHIDEventTap, ev );
-        
-        CFRelease( ev );
-        CFRelease(eventSource);
+        CGEventPost(kCGHIDEventTap, ev);
+        CFRelease(ev);
     }
     
     void send(int key, KeyState k, int num, ...){
         CGKeyCode code = getCodeFromOFKey(key);
-        CGEventSourceRef eventSource  = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
         CGEventRef ev = CGEventCreateKeyboardEvent (eventSource, code, k);
         
         va_list args;
         va_start(args, num);
         
-        uint64_t flags;
+        uint64_t flags = k ? 0 : CGEventGetFlags(ev);
         for (int i = 0; i < num; i++) {
             int key = va_arg(args , int);
             uint64_t flag = getFlagFromOFKey(key);
@@ -69,12 +69,9 @@ public:
         }
         CGEventSetFlags(ev, static_cast<CGEventFlags>(flags));
         
-        CGEventPost( kCGHIDEventTap, ev );
-        
-        CFRelease( ev );
-        CFRelease(eventSource);
+        CGEventPost(kCGHIDEventTap, ev);
+        CFRelease(ev);
     }
-
     
 private:
     
@@ -84,7 +81,7 @@ private:
         TISInputSourceRef currentKeyboard = TISCopyCurrentKeyboardLayoutInputSource();
         
         if (currentKeyboard == NULL) {
-            fputs("Could not find keyboard layout\n", stderr);
+            ofLogError("ofxCocoaKeyEvents") << "Could not find keyboard layout";
             return UINT16_MAX;
         }
         
@@ -92,12 +89,11 @@ private:
                                                                  kTISPropertyUnicodeKeyLayoutData);
         CFRelease(currentKeyboard);
         if (currentLayoutData == NULL) {
-            fputs("Could not find layout data\n", stderr);
+            ofLogError("ofxCocoaKeyEvents") << "Could not find layout data";
             return UINT16_MAX;
         }
         
-        return keyCodeForCharWithLayout(c,
-                                        (const UCKeyboardLayout *)CFDataGetBytePtr(currentLayoutData));
+        return keyCodeForCharWithLayout(c, (const UCKeyboardLayout *)CFDataGetBytePtr(currentLayoutData));
     }
     
     /* Beware! Messy, incomprehensible code ahead!
@@ -276,6 +272,4 @@ private:
         }
         return static_cast<CGEventFlags>(0);
     }
-
-    
 };
